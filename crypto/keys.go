@@ -3,6 +3,7 @@ package crypto
 import (
 	"crypto/ed25519"
 	"crypto/rand"
+	"encoding/hex"
 	"io"
 )
 
@@ -10,6 +11,7 @@ const (
 	privKeyLen = 64 // 32 from private key + 32 from appending public key
 	pubKeyLen  = 32
 	seedLen    = 32
+	addressLen = 20
 )
 
 // Private Key
@@ -22,6 +24,23 @@ func GeneratePrivateKey() *PrivateKey {
 	return &PrivateKey{
 		key: ed25519.NewKeyFromSeed(seed),
 	}
+}
+
+func NewPrivateKeyFromSeed(seed []byte) *PrivateKey {
+	if len(seed) != seedLen {
+		panic("invalid seed length. Must be 32")
+	}
+	return &PrivateKey{
+		key: ed25519.NewKeyFromSeed(seed),
+	}
+}
+
+func NewPrivateKeyFromString(s string) *PrivateKey {
+	b, err := hex.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return NewPrivateKeyFromSeed(b)
 }
 
 type PrivateKey struct {
@@ -46,7 +65,7 @@ Returns the public key. Public key is extracted from last 32 bytes of private ke
 */
 func (p *PrivateKey) Public() *PublicKey {
 	b := make([]byte, pubKeyLen)
-	copy(b, p.key[pubKeyLen:])
+	copy(b, p.key[pubKeyLen:]) // get last 32 bytes of private key
 
 	return &PublicKey{
 		key: b,
@@ -56,6 +75,12 @@ func (p *PrivateKey) Public() *PublicKey {
 // Public Key
 type PublicKey struct {
 	key ed25519.PublicKey
+}
+
+func (p *PublicKey) Address() Address {
+	return Address{
+		value: p.key[len(p.key)-addressLen:], // same as p.key[12:]. Ignores first 12 bytes and get last 20 to be address
+	}
 }
 
 func (p *PublicKey) Bytes() []byte {
@@ -83,4 +108,17 @@ func (s *Signature) Verify(pubKey *PublicKey, msg []byte) bool {
 		s.value: the signed message that will be compared with raw message
 	*/
 	return ed25519.Verify(pubKey.key, msg, s.value)
+}
+
+// Address
+type Address struct {
+	value []byte
+}
+
+func (a Address) Bytes() []byte {
+	return a.value
+}
+
+func (a Address) String() string {
+	return hex.EncodeToString(a.value)
 }

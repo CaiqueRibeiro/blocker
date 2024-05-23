@@ -13,6 +13,17 @@ func TestGeneratePrivateKey(t *testing.T) {
 	assert.Equal(t, len(pubKey.Bytes()), pubKeyLen)
 }
 
+func TestGeneratePrivateKeyFromString(t *testing.T) {
+	var (
+		seed         = "8e41a5878c3f70850588f6560c91048fa7d67743a148ddce23c1e47aeb149871"
+		expectedAddr = "3579839bce98bc81030b0ab5068e155e55bf222b"
+		privKey      = NewPrivateKeyFromString(seed)
+	)
+	assert.Equal(t, privKeyLen, len(privKey.Bytes()))
+	address := privKey.Public().Address()
+	assert.Equal(t, expectedAddr, address.String())
+}
+
 func TestPrivateKeySign(t *testing.T) {
 	privKey := GeneratePrivateKey()
 	pubKey := privKey.Public()
@@ -33,4 +44,11 @@ func TestPrivateKeySign(t *testing.T) {
 		But, as the sig.value was not signed using "otherPrivKey", using "otherPubKey" won't be able to unsign it
 	*/
 	assert.False(t, sig.Verify(otherPubKey, msg))
+}
+
+func TestPublicKeyToAddress(t *testing.T) {
+	privKey := GeneratePrivateKey()
+	pubKey := privKey.Public()
+	address := pubKey.Address()
+	assert.Equal(t, addressLen, len(address.Bytes()))
 }
