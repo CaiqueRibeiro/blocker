@@ -52,7 +52,9 @@ func (p *PrivateKey) Bytes() []byte {
 }
 
 /*
-Uses the generate private key bytes to sign/encrypt the message. Will only be decrypted using public key
+Uses the generated private key bytes to sign/encrypt the message.
+Will only be decrypted using public key.
+This will generate a hash that, using public key, can be reverted to original message
 */
 func (p *PrivateKey) Sign(msg []byte) *Signature {
 	return &Signature{
@@ -87,7 +89,7 @@ func (p *PublicKey) Bytes() []byte {
 	return p.key
 }
 
-// Signature
+// Signature: a message hashed (signed) with the private key
 type Signature struct {
 	value []byte
 }
@@ -97,7 +99,9 @@ func (s *Signature) Bytes() []byte {
 }
 
 /*
-Verify if the the message informed is the same os the signature. This can be verified using the public key.
+Verify if the the message informed is the same os the signature.
+This can be verified using the public key + s.value
+(if s.value can be descrypted and it's equal to msg, it means that msg informed is valid)
 pubKey: the public key that should be used
 msg: the message you want to compare with
 */
