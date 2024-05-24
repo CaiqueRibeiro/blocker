@@ -24,11 +24,17 @@ func HashTransaction(tx *proto.Transaction) []byte {
 
 func VerifyTransaction(tx *proto.Transaction) bool {
 	for _, input := range tx.Inputs {
+		// just transform signature and public key from bytes to structures
 		var (
 			sig    = crypto.SignatureFromBytes(input.Signature)
 			pubKey = crypto.PublicKeyFromBytes(input.PublicKey)
 		)
-		// TODO: verify this resolution of putting signature as nil
+		/*
+			Removes the signature to not break Verify, because when transaction input was signed,
+			there was not signature in input yet
+
+			TODO: verify this resolution of putting signature as nil
+		*/
 		input.Signature = nil
 		if !sig.Verify(pubKey, HashTransaction(tx)) {
 			return false
