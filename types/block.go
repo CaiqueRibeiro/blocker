@@ -10,20 +10,20 @@ import (
 
 /*
 Assigns the block after getting its hash
- 1. transform the block header in a hash
+ 1. transform the block in a hash
  2. Sign (encrypt) the hash with private key
  3. Return the signed hash that only can be decrypted using public key
 */
 func SignBlock(pk *crypto.PrivateKey, b *proto.Block) *crypto.Signature {
 	/*
-		1. Transform de block header in []byte
+		1. Transform de block in []byte
 		2. Sign it with private key
 	*/
-	hb := HashBlock(b) // block header hashed in a [32]byte
+	hb := HashBlock(b) // block hashed in a [32]byte
 	return pk.Sign(hb) // returns a signature (64 bytes)
 }
 
-// Returns a SHA256 of the header to be used as block's hash
+// Returns a SHA256 of the block to be used as block's hash
 func HashBlock(block *proto.Block) []byte {
 	b, err := pb.Marshal(block)
 	if err != nil {

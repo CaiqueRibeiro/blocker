@@ -4,14 +4,16 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"io"
 )
 
 const (
-	privKeyLen = 64 // 32 from private key + 32 from appending public key
-	pubKeyLen  = 32
-	seedLen    = 32
-	addressLen = 20
+	privKeyLen   = 64 // 32 from private key + 32 from appending public key
+	signatureLen = 64
+	pubKeyLen    = 32
+	seedLen      = 32
+	addressLen   = 20
 )
 
 // Private Key
@@ -79,6 +81,16 @@ type PublicKey struct {
 	key ed25519.PublicKey
 }
 
+// Converts a public key in bytes to the proper struct (do not change value)
+func PublicKeyFromBytes(b []byte) *PublicKey {
+	if len(b) != pubKeyLen {
+		panic("invalid public key length")
+	}
+	return &PublicKey{
+		key: ed25519.PublicKey(b),
+	}
+}
+
 func (p *PublicKey) Address() Address {
 	return Address{
 		value: p.key[len(p.key)-addressLen:], // same as p.key[12:]. Ignores first 12 bytes and get last 20 to be address
@@ -96,6 +108,16 @@ type Signature struct {
 
 func (s *Signature) Bytes() []byte {
 	return s.value
+}
+
+// Converts a signature in bytes to the proper struct (do not change value)
+func SignatureFromBytes(b []byte) *Signature {
+	if len(b) != signatureLen {
+		panic(fmt.Sprintf("length of the bytes not equal to %d", signatureLen))
+	}
+	return &Signature{
+		value: b,
+	}
 }
 
 /*
