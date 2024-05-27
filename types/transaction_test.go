@@ -38,8 +38,8 @@ func TestNewtransaction(t *testing.T) {
 		Outputs: []*proto.TxOutput{output1, output2},
 	}
 
-	sig := SignTransaction(fromPrivKey, tx)
-	input.Signature = sig.Bytes()
+	sig := SignTransaction(fromPrivKey, tx) // hashes all the message (with input and output)
+	input.Signature = sig.Bytes()           // uses the whole tx hashed as signature of input
 
-	assert.True(t, VerifyTransaction(tx))
+	assert.True(t, VerifyTransaction(tx)) // verify if transaction was signed properly in flow
 }
