@@ -2,10 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"net"
-	"time"
 
 	"github.com/CaiqueRibeiro/blocker/node"
 	"github.com/CaiqueRibeiro/blocker/proto"
@@ -13,24 +10,27 @@ import (
 )
 
 func main() {
-	node := node.NewNode()
-	options := []grpc.ServerOption{}
-	grpcServer := grpc.NewServer(options...)
-	ln, err := net.Listen("tcp", ":3000")
-	if err != nil {
-		log.Fatal(err)
-	}
-	proto.RegisterNodeServer(grpcServer, node)
-	fmt.Println("node running on port:", ":3000")
+	makeNode(":3000", []string{})
+	makeNode(":4000", []string{":3000"})
 
-	go func() {
-		for {
-			time.Sleep(2 * time.Second)
-			makeTransaction()
+	// go func() {
+	// 	for {
+	// 		time.Sleep(2 * time.Second)
+	// 		makeTransaction()
+	// 	}
+	// }()
+	select {} // just to block
+}
+
+func makeNode(listenAddr string, bootstrapNodes []string) *node.Node {
+	n := node.NewNode()
+	go n.Start(listenAddr)
+	if len(bootstrapNodes) > 0 {
+		if err := n.BootstrapNetwork(bootstrapNodes); err != nil {
+			log.Fatal(err)
 		}
-	}()
-
-	grpcServer.Serve(ln)
+	}
+	return n
 }
 
 // temporary: just to test gRPC calls
@@ -41,10 +41,12 @@ func makeTransaction() {
 	}
 	c := proto.NewNodeClient(client)
 	version := &proto.Version{
-		Version: "blocker-0.1",
-		Height:  1,
+		Version:    "blocker-0.1",
+		Height:     1,
+		ListenAddr: ":4000",
 	}
 
+	/* sends own version to another node an receives its version from it */
 	_, err = c.Handshake(context.TODO(), version)
 	if err != nil {
 		log.Fatal(err)

@@ -8,11 +8,6 @@ import (
 	pb "google.golang.org/protobuf/proto"
 )
 
-func SignTransaction(pk *crypto.PrivateKey, tx *proto.Transaction) *crypto.Signature {
-	ht := HashTransaction(tx)
-	return pk.Sign(ht)
-}
-
 func HashTransaction(tx *proto.Transaction) []byte {
 	b, err := pb.Marshal(tx)
 	if err != nil {
@@ -20,6 +15,11 @@ func HashTransaction(tx *proto.Transaction) []byte {
 	}
 	hash := sha256.Sum256(b)
 	return hash[:]
+}
+
+func SignTransaction(pk *crypto.PrivateKey, tx *proto.Transaction) *crypto.Signature {
+	ht := HashTransaction(tx)
+	return pk.Sign(ht)
 }
 
 func VerifyTransaction(tx *proto.Transaction) bool {
