@@ -7,11 +7,13 @@ import (
 	"sync"
 
 	"github.com/CaiqueRibeiro/blocker/proto"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 )
 
 type Node struct {
+	logger     *zap.SugaredLogger
 	version    string
 	listenAddr string
 	peerLock   sync.RWMutex
@@ -20,9 +22,14 @@ type Node struct {
 }
 
 func NewNode() *Node {
+	loggerConfig := zap.NewDevelopmentConfig()
+	loggerConfig.EncoderConfig.TimeKey = ""
+	logger, _ := loggerConfig.Build()
+
 	return &Node{
 		peers:   make(map[proto.NodeClient]*proto.Version),
 		version: "blocker-0.1",
+		logger:  logger.Sugar(),
 	}
 }
 
@@ -37,7 +44,7 @@ func (n *Node) getVersion() *proto.Version {
 func (n *Node) addPeer(c proto.NodeClient, v *proto.Version) {
 	n.peerLock.Lock()
 	defer n.peerLock.Unlock()
-	fmt.Printf("[%s] new peer connected to %s - height (%d)\n", n.listenAddr, v.ListenAddr, v.Height)
+	n.logger.Debugw("new peer connected", "addr", v.ListenAddr, "height", v.Height)
 	n.peers[c] = v
 }
 
@@ -55,7 +62,7 @@ func (n *Node) BootstrapNetwork(addrs []string) error {
 		}
 		v, err := c.Handshake(context.Background(), n.getVersion())
 		if err != nil {
-			fmt.Println("handshake error", err)
+			n.logger.Error("handshake error", err)
 			continue
 		}
 		n.addPeer(c, v)
@@ -72,7 +79,7 @@ func (n *Node) Start(listenAddr string) error {
 		return err
 	}
 	proto.RegisterNodeServer(grpcServer, n)
-	fmt.Println("node running on port:", ":3000")
+	n.logger.Infow("node started...", "port", n.listenAddr)
 	return grpcServer.Serve(ln)
 }
 
