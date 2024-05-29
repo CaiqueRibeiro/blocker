@@ -10,23 +10,17 @@ import (
 )
 
 func main() {
-	makeNode(":3000", []string{})
-	makeNode(":4000", []string{":3000"})
+	makeNode(":3000", []string{})        // creates a genesis node
+	makeNode(":4000", []string{":3000"}) // creates a node that connects to the genesis node
 
-	// go func() {
-	// 	for {
-	// 		time.Sleep(2 * time.Second)
-	// 		makeTransaction()
-	// 	}
-	// }()
 	select {} // just to block
 }
 
 func makeNode(listenAddr string, bootstrapNodes []string) *node.Node {
-	n := node.NewNode()
-	go n.Start(listenAddr)
-	if len(bootstrapNodes) > 0 {
-		if err := n.BootstrapNetwork(bootstrapNodes); err != nil {
+	n := node.NewNode()          // creates a new node
+	go n.Start(listenAddr)       // starts the node
+	if len(bootstrapNodes) > 0 { // if there are bootstrap nodes
+		if err := n.BootstrapNetwork(bootstrapNodes); err != nil { // connect with node address informed through handshake
 			log.Fatal(err)
 		}
 	}

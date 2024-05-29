@@ -21,6 +21,14 @@ type Node struct {
 	proto.UnimplementedNodeServer
 }
 
+func makeNodeClient(listenAddr string) (proto.NodeClient, error) {
+	c, err := grpc.Dial(listenAddr, grpc.WithInsecure())
+	if err != nil {
+		return nil, err
+	}
+	return proto.NewNodeClient(c), nil
+}
+
 func NewNode() *Node {
 	loggerConfig := zap.NewDevelopmentConfig()
 	loggerConfig.EncoderConfig.TimeKey = ""
@@ -56,16 +64,16 @@ func (n *Node) deletePeer(c proto.NodeClient) {
 
 func (n *Node) BootstrapNetwork(addrs []string) error {
 	for _, addr := range addrs {
-		c, err := makeNodeClient(addr)
+		c, err := makeNodeClient(addr) // connects to an external node address
 		if err != nil {
 			return err
 		}
-		v, err := c.Handshake(context.Background(), n.getVersion())
+		v, err := c.Handshake(context.Background(), n.getVersion()) // sends own version to another node an receives its version from it
 		if err != nil {
 			n.logger.Error("handshake error", err)
 			continue
 		}
-		n.addPeer(c, v)
+		n.addPeer(c, v) // adds the node to the list of connected peers
 	}
 	return nil
 }
@@ -88,20 +96,12 @@ func (n *Node) Handshake(ctx context.Context, v *proto.Version) (*proto.Version,
 	if err != nil {
 		return nil, err
 	}
-	n.addPeer(c, v)
-	return n.getVersion(), nil
+	n.addPeer(c, v)            // add the receiving node to the list of connected peers (two-way connection)
+	return n.getVersion(), nil // returns own version to receiving node to be added in its list of connected peers
 }
 
 func (n *Node) HandleTransaction(ctx context.Context, tx *proto.Transaction) (*proto.Ack, error) {
 	peer, _ := peer.FromContext(ctx)
 	fmt.Println("received tx from:", peer)
 	return &proto.Ack{}, nil
-}
-
-func makeNodeClient(listenAddr string) (proto.NodeClient, error) {
-	c, err := grpc.Dial(listenAddr, grpc.WithInsecure())
-	if err != nil {
-		return nil, err
-	}
-	return proto.NewNodeClient(c), nil
 }
