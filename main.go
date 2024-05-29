@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/CaiqueRibeiro/blocker/node"
 	"github.com/CaiqueRibeiro/blocker/proto"
@@ -10,20 +11,18 @@ import (
 )
 
 func main() {
-	makeNode(":3000", []string{})        // creates a genesis node
+	makeNode(":3000", []string{}) // creates a genesis node
+	time.Sleep(time.Second)
 	makeNode(":4000", []string{":3000"}) // creates a node that connects to the genesis node
+	time.Sleep(4 * time.Second)
+	makeNode(":6000", []string{":4000"})
 
 	select {} // just to block
 }
 
 func makeNode(listenAddr string, bootstrapNodes []string) *node.Node {
-	n := node.NewNode()          // creates a new node
-	go n.Start(listenAddr)       // starts the node
-	if len(bootstrapNodes) > 0 { // if there are bootstrap nodes
-		if err := n.BootstrapNetwork(bootstrapNodes); err != nil { // connect with node address informed through handshake
-			log.Fatal(err)
-		}
-	}
+	n := node.NewNode()                    // creates a new node
+	go n.Start(listenAddr, bootstrapNodes) // starts the node
 	return n
 }
 
