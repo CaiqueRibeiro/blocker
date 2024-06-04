@@ -14,18 +14,18 @@ type BlockStorer interface {
 	Get(string) (*proto.Block, error)
 }
 
-type MemoryblockStore struct {
+type MemoryBlockStore struct {
 	lock   sync.RWMutex
 	blocks map[string]*proto.Block
 }
 
-func NewMemoryBlockStore() *MemoryblockStore {
-	return &MemoryblockStore{
+func NewMemoryBlockStore() *MemoryBlockStore {
+	return &MemoryBlockStore{
 		blocks: make(map[string]*proto.Block),
 	}
 }
 
-func (s *MemoryblockStore) Put(b *proto.Block) error {
+func (s *MemoryBlockStore) Put(b *proto.Block) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	hash := hex.EncodeToString(types.HashBlock(b))
@@ -33,7 +33,7 @@ func (s *MemoryblockStore) Put(b *proto.Block) error {
 	return nil
 }
 
-func (s *MemoryblockStore) Get(hash string) (*proto.Block, error) {
+func (s *MemoryBlockStore) Get(hash string) (*proto.Block, error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	block, ok := s.blocks[hash]
