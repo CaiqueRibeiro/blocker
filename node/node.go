@@ -18,14 +18,36 @@ import (
 const BLOCK_TIME = 5 * time.Second
 
 type Mempool struct {
-	txx map[string]*proto.Transaction
+	lock sync.RWMutex
+	txx  map[string]*proto.Transaction
 }
 
 func NewMemPool() *Mempool {
 	return &Mempool{txx: make(map[string]*proto.Transaction)}
 }
 
+func (m *Mempool) Clear() []*proto.Transaction {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+	txx := make([]*proto.Transaction, len(m.txx))
+	it := 0
+	for k, v := range m.txx {
+		delete(m.txx, k)
+		txx[it] = v
+		it++
+	}
+	return txx
+}
+
+func (m *Mempool) Len() int {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+	return len(m.txx)
+}
+
 func (m *Mempool) Has(tx *proto.Transaction) bool {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
 	hash := hex.EncodeToString(types.HashTransaction(tx))
 	_, ok := m.txx[hash]
 	return ok
@@ -35,6 +57,8 @@ func (m *Mempool) Add(tx *proto.Transaction) bool {
 	if m.Has(tx) {
 		return false
 	}
+	m.lock.Lock()
+	defer m.lock.Unlock()
 	hash := hex.EncodeToString(types.HashTransaction(tx))
 	m.txx[hash] = tx
 	return true
@@ -122,13 +146,11 @@ func (n *Node) HandleTransaction(ctx context.Context, tx *proto.Transaction) (*p
 
 func (n *Node) validatorLoop() {
 	n.logger.Infow("starting validator loop", "pubkey", n.PrivateKey.Public(), "blockTime", BLOCK_TIME)
-	ticket := time.NewTicker(BLOCK_TIME)
+	ticker := time.NewTicker(BLOCK_TIME) // process a new block every 5 seconds, clearing all the transactions in the mempool
 	for {
-		<-ticket.C
-		n.logger.Debugw("time to create a new block", "lenTx", len(n.mempool.txx))
-		for hash := range n.mempool.txx {
-			delete(n.mempool.txx, hash)
-		}
+		<-ticker.C
+		txx := n.mempool.Clear()
+		n.logger.Debugw("time to create a new block", "lenTx", len(txx))
 	}
 }
 

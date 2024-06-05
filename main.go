@@ -20,7 +20,7 @@ func main() {
 	makeNode(":6000", []string{":4000"}, false) // creates a node that connects to the genesis node
 
 	for {
-		time.Sleep(2 * time.Second)
+		time.Sleep(1 * time.Second)
 		makeTransaction()
 	}
 }

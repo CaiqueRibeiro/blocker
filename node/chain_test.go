@@ -3,28 +3,45 @@ package node
 import (
 	"testing"
 
+	"github.com/CaiqueRibeiro/blocker/crypto"
+	"github.com/CaiqueRibeiro/blocker/proto"
 	"github.com/CaiqueRibeiro/blocker/types"
 	"github.com/CaiqueRibeiro/blocker/util"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func randomBlock(t *testing.T, chain *Chain) *proto.Block {
+	privKey := crypto.GeneratePrivateKey()
+	b := util.RandomBlock()
+	prevBlock, err := chain.GetBlockByHeight(chain.Height())
+	require.Nil(t, err)
+	b.Header.PrevHash = types.HashBlock(prevBlock)
+	types.SignBlock(privKey, b)
+	return b
+}
+
+func TestNewChain(t *testing.T) {
+	chain := NewChain(NewMemoryBlockStore())
+	require.Equal(t, 0, chain.Height())
+	_, err := chain.GetBlockByHeight(0)
+	require.Nil(t, err)
+}
 
 func TestAddBlock(t *testing.T) {
 	chain := NewChain(NewMemoryBlockStore())
 
 	for i := 0; i < 100; i++ {
-		var (
-			block     = util.RandomBlock()
-			blockHash = types.HashBlock(block)
-		)
+		block := randomBlock(t, chain)
+		blockHash := types.HashBlock(block)
 
-		assert.Nil(t, chain.AddBlock(block))
+		require.Nil(t, chain.AddBlock(block))
 		fetchedBlock, err := chain.GetBlockByHash(blockHash)
-		assert.Nil(t, err)
-		assert.Equal(t, block, fetchedBlock)
+		require.Nil(t, err)
+		require.Equal(t, block, fetchedBlock)
 
-		fetchedBlockByHeight, err := chain.GetBlockByHeight(i)
-		assert.Nil(t, err)
-		assert.Equal(t, block, fetchedBlockByHeight)
+		fetchedBlockByHeight, err := chain.GetBlockByHeight(i + 1)
+		require.Nil(t, err)
+		require.Equal(t, block, fetchedBlockByHeight)
 	}
 }
 
@@ -32,10 +49,9 @@ func TestChainHeight(t *testing.T) {
 	chain := NewChain(NewMemoryBlockStore())
 
 	for i := 0; i < 100; i++ {
-		b := util.RandomBlock()
-
-		assert.Nil(t, chain.AddBlock(b))
-		assert.Equal(t, i, chain.Height())
+		b := randomBlock(t, chain)
+		require.Nil(t, chain.AddBlock(b))
+		require.Equal(t, i+1, chain.Height())
 	}
 
 }

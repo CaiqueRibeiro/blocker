@@ -15,7 +15,7 @@ func TestHashBlock(t *testing.T) {
 	assert.Equal(t, 32, len(hash))
 }
 
-func TestSignBlock(t *testing.T) {
+func TestSignVerifyBlock(t *testing.T) {
 	var (
 		block   = util.RandomBlock()          // creates a dummy block
 		privKey = crypto.GeneratePrivateKey() // generates a new private key
@@ -26,4 +26,12 @@ func TestSignBlock(t *testing.T) {
 	assert.Equal(t, 64, len(sig.Bytes()))
 	// verify if, decrypting hashed block, it will be equal to sign.value
 	assert.True(t, sig.Verify(pubKey, HashBlock(block)))
+	// verify if block got correct public key and signature when it was signed
+	assert.Equal(t, block.PublicKey, pubKey.Bytes())
+	assert.Equal(t, block.Signature, sig.Bytes())
+	assert.True(t, VerifyBlock(block))
+
+	invalidPrivKey := crypto.GeneratePrivateKey()
+	block.PublicKey = invalidPrivKey.Public().Bytes()
+	assert.False(t, VerifyBlock(block))
 }

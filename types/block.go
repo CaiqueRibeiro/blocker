@@ -24,16 +24,34 @@ func HashHeader(h *proto.Header) []byte {
 }
 
 /*
-Assigns the block after getting its hash
+Assigns the block after getting its hash and add private key and signature in it
  1. transform the block header in a hash
  2. Sign (encrypt) the hash with private key
- 3. Return the signed hash that only can be decrypted using public key
+ 3. Add the public key in the block
+ 4. Add the signature in the block
+ 5. Return the signed hash that only can be decrypted using public key
 */
 func SignBlock(pk *crypto.PrivateKey, b *proto.Block) *crypto.Signature {
 	/*
 		1. Transform de block header in []byte
 		2. Sign it with private key
 	*/
-	hb := HashBlock(b) // block hashed in a [32]byte
-	return pk.Sign(hb) // returns a signature (64 bytes)
+	hash := HashBlock(b) // block hashed in a [32]byte
+	sig := pk.Sign(hash) // returns a signature (64 bytes)
+	b.PublicKey = pk.Public().Bytes()
+	b.Signature = sig.Bytes()
+	return sig
+}
+
+func VerifyBlock(b *proto.Block) bool {
+	if len(b.PublicKey) != crypto.PubKeyLen {
+		return false
+	}
+	if len(b.Signature) != crypto.SignatureLen {
+		return false
+	}
+	sig := crypto.SignatureFromBytes(b.Signature)    // gets signature of the block (set in bytes)
+	pubKey := crypto.PublicKeyFromBytes(b.PublicKey) // gets public key of the block (set in bytes)
+	hash := HashBlock(b)
+	return sig.Verify(pubKey, hash)
 }

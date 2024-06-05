@@ -9,16 +9,16 @@ import (
 )
 
 const (
-	privKeyLen   = 64 // 32 from private key + 32 from appending public key
-	signatureLen = 64
-	pubKeyLen    = 32
-	seedLen      = 32
-	addressLen   = 20
+	PrivKeyLen   = 64 // 32 from private key + 32 from appending public key
+	SignatureLen = 64
+	PubKeyLen    = 32
+	SeedLen      = 32
+	AddressLen   = 20
 )
 
 // Private Key
 func GeneratePrivateKey() *PrivateKey {
-	seed := make([]byte, seedLen)
+	seed := make([]byte, SeedLen)
 	_, err := io.ReadFull(rand.Reader, seed)
 	if err != nil {
 		panic(err)
@@ -29,7 +29,7 @@ func GeneratePrivateKey() *PrivateKey {
 }
 
 func NewPrivateKeyFromSeed(seed []byte) *PrivateKey {
-	if len(seed) != seedLen {
+	if len(seed) != SeedLen {
 		panic("invalid seed length. Must be 32")
 	}
 	return &PrivateKey{
@@ -68,8 +68,8 @@ func (p *PrivateKey) Sign(msg []byte) *Signature {
 Returns the public key. Public key is extracted from last 32 bytes of private key
 */
 func (p *PrivateKey) Public() *PublicKey {
-	b := make([]byte, pubKeyLen)
-	copy(b, p.key[pubKeyLen:]) // get last 32 bytes of private key
+	b := make([]byte, PubKeyLen)
+	copy(b, p.key[PubKeyLen:]) // get last 32 bytes of private key
 
 	return &PublicKey{
 		key: b,
@@ -83,7 +83,7 @@ type PublicKey struct {
 
 // Converts a public key in bytes to the proper struct (do not change value)
 func PublicKeyFromBytes(b []byte) *PublicKey {
-	if len(b) != pubKeyLen {
+	if len(b) != PubKeyLen {
 		panic("invalid public key length")
 	}
 	return &PublicKey{
@@ -93,7 +93,7 @@ func PublicKeyFromBytes(b []byte) *PublicKey {
 
 func (p *PublicKey) Address() Address {
 	return Address{
-		value: p.key[len(p.key)-addressLen:], // same as p.key[12:]. Ignores first 12 bytes and get last 20 to be address
+		value: p.key[len(p.key)-AddressLen:], // same as p.key[12:]. Ignores first 12 bytes and get last 20 to be address
 	}
 }
 
@@ -112,8 +112,8 @@ func (s *Signature) Bytes() []byte {
 
 // Converts a signature in bytes to the proper struct (do not change value)
 func SignatureFromBytes(b []byte) *Signature {
-	if len(b) != signatureLen {
-		panic(fmt.Sprintf("length of the bytes not equal to %d", signatureLen))
+	if len(b) != SignatureLen {
+		panic(fmt.Sprintf("length of the bytes not equal to %d", SignatureLen))
 	}
 	return &Signature{
 		value: b,
