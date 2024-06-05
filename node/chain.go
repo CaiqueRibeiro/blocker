@@ -10,6 +10,8 @@ import (
 	"github.com/CaiqueRibeiro/blocker/types"
 )
 
+const seed = "33c3e6749d95d5e9611c3f8e6ebcfe10d840226c46c4df18b7026b64be73a13f"
+
 type HeaderList struct {
 	headers []*proto.Header
 }
@@ -40,12 +42,14 @@ func (list *HeaderList) Height() int {
 }
 
 type Chain struct {
+	txStore    TXStorer
 	blockStore BlockStorer
 	headers    HeaderList
 }
 
-func NewChain(bs BlockStorer) *Chain {
+func NewChain(bs BlockStorer, txs TXStorer) *Chain {
 	chain := &Chain{
+		txStore:    txs,
 		blockStore: bs,
 		headers:    *NewHeaderList(),
 	}
@@ -70,6 +74,11 @@ func (c *Chain) AddBlock(b *proto.Block) error {
 // Add block with validation (to be used outside the chain scope)
 func (c *Chain) addBlock(b *proto.Block) error {
 	c.headers.Add(b.Header)
+	for _, tx := range b.Transactions {
+		if err := c.txStore.Put(tx); err != nil {
+			return err
+		}
+	}
 	return c.blockStore.Put(b)
 }
 
@@ -112,12 +121,27 @@ func (c *Chain) ValidateBlock(b *proto.Block) error {
 }
 
 func createGenesisBlock() *proto.Block {
-	privKey := crypto.GeneratePrivateKey() // creates a private key by hand because it's a genesis block
+	privKey := crypto.NewPrivateKeyFromString(seed) // creates a private key by hand because it's a genesis block
 	block := &proto.Block{
 		Header: &proto.Header{
 			Version: 1,
 		},
 	}
 	types.SignBlock(privKey, block)
+
+	tx := &proto.Transaction{
+		Version: 1,
+		Inputs:  []*proto.TxInput{},
+		Outputs: []*proto.TxOutput{
+			{
+				Amount:  1000,
+				Address: privKey.Public().Address().Bytes(),
+			},
+		},
+	}
+
+	block.Transactions = append(block.Transactions, tx)
+	types.SignBlock(privKey, block)
+
 	return block
 }
