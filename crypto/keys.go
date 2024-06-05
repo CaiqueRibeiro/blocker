@@ -121,11 +121,11 @@ func SignatureFromBytes(b []byte) *Signature {
 }
 
 /*
-Verify if the the message informed is the same os the signature.
-This can be verified using the public key + s.value
-(if s.value can be descrypted and it's equal to msg, it means that msg informed is valid)
+Verify if the the message informed is the same of the signature.
+This can be verified using the public key + signature value
+(if s.value can be descrypted and it's equal to msg (hash of a block), it means that msg informed is valid)
 pubKey: the public key that should be used
-msg: the message you want to compare with
+msg: the message you want to compare with (a hash of a block)
 */
 func (s *Signature) Verify(pubKey *PublicKey, msg []byte) bool {
 	/*

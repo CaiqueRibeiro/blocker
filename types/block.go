@@ -8,12 +8,12 @@ import (
 	pb "google.golang.org/protobuf/proto"
 )
 
-// Returns a SHA256 of the block's header to be used as block's hash
+// Returns a SHA256 of the block's header to be used as block's hash (general, not using priv key)
 func HashBlock(block *proto.Block) []byte {
 	return HashHeader(block.Header)
 }
 
-// Gets the header of a block and hashes it in a sha256 [32]byte
+// Gets the header of a block and hashes it in a sha256 [32]byte (general, not using priv key)
 func HashHeader(h *proto.Header) []byte {
 	b, err := pb.Marshal(h)
 	if err != nil {
@@ -36,10 +36,10 @@ func SignBlock(pk *crypto.PrivateKey, b *proto.Block) *crypto.Signature {
 		1. Transform de block header in []byte
 		2. Sign it with private key
 	*/
-	hash := HashBlock(b) // block hashed in a [32]byte
-	sig := pk.Sign(hash) // returns a signature (64 bytes)
-	b.PublicKey = pk.Public().Bytes()
-	b.Signature = sig.Bytes()
+	hash := HashBlock(b)              // block hashed in a [32]byte
+	sig := pk.Sign(hash)              // returns a signature (64 bytes)
+	b.PublicKey = pk.Public().Bytes() // public key used to unsign the pk.Sign(hash)
+	b.Signature = sig.Bytes()         // hashed block signed with private key
 	return sig
 }
 
@@ -52,6 +52,6 @@ func VerifyBlock(b *proto.Block) bool {
 	}
 	sig := crypto.SignatureFromBytes(b.Signature)    // gets signature of the block (set in bytes)
 	pubKey := crypto.PublicKeyFromBytes(b.PublicKey) // gets public key of the block (set in bytes)
-	hash := HashBlock(b)
-	return sig.Verify(pubKey, hash)
+	hash := HashBlock(b)                             // hash the block
+	return sig.Verify(pubKey, hash)                  // verify if, when the sig.value is decrypted, it will be equal to hash
 }
