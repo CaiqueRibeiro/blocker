@@ -88,6 +88,9 @@ func TestBlockWithTx(t *testing.T) {
 		Inputs:  inputs,
 		Outputs: outputs,
 	}
+	sig := types.SignTransaction(privKey, tx)
+	tx.Inputs[0].Signature = sig.Bytes()
+
 	block.Transactions = append(block.Transactions, tx)
 	require.Nil(t, chain.AddBlock(block))
 

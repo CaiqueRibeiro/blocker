@@ -24,7 +24,9 @@ func SignTransaction(pk *crypto.PrivateKey, tx *proto.Transaction) *crypto.Signa
 
 func VerifyTransaction(tx *proto.Transaction) bool {
 	for _, input := range tx.Inputs {
-		// just transform signature and public key from bytes to structures
+		if len(input.Signature) == 0 {
+			panic("the transaction has no signature")
+		}
 		var (
 			sig    = crypto.SignatureFromBytes(input.Signature)
 			pubKey = crypto.PublicKeyFromBytes(input.PublicKey)
@@ -32,8 +34,6 @@ func VerifyTransaction(tx *proto.Transaction) bool {
 		/*
 			Removes the signature to not break Verify, because when transaction input was signed,
 			there was not signature in input yet
-
-			TODO: verify this resolution of putting signature as nil
 		*/
 		input.Signature = nil
 		if !sig.Verify(pubKey, HashTransaction(tx)) {

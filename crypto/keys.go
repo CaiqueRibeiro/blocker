@@ -55,8 +55,7 @@ func (p *PrivateKey) Bytes() []byte {
 
 /*
 Uses the generated private key bytes to sign/encrypt the message.
-Will only be decrypted using public key.
-This will generate a hash that, using public key, can be reverted to original message
+Informs the private key but internally use its public key to sign the message
 */
 func (p *PrivateKey) Sign(msg []byte) *Signature {
 	return &Signature{
