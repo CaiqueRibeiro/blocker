@@ -2,6 +2,7 @@ package node
 
 import (
 	"encoding/hex"
+	"fmt"
 	"testing"
 
 	"github.com/CaiqueRibeiro/blocker/crypto"
@@ -98,4 +99,12 @@ func TestBlockWithTx(t *testing.T) {
 	fetchedTx, err := chain.txStore.Get(txHash)
 	assert.Nil(t, err)
 	assert.Equal(t, tx, fetchedTx)
+
+	// check if this is an UTXO that is unspent
+	address := crypto.AddressFromBytes(tx.Outputs[0].Address)
+	key := fmt.Sprintf("%s_%s", address.String(), txHash)
+	utxo, err := chain.utxoStore.Get(key)
+
+	assert.Nil(t, err)
+	assert.Equal(t, txHash, utxo.Hash)
 }
