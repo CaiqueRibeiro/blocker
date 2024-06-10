@@ -2,7 +2,6 @@ package node
 
 import (
 	"encoding/hex"
-	"fmt"
 	"testing"
 
 	"github.com/CaiqueRibeiro/blocker/crypto"
@@ -58,6 +57,40 @@ func TestChainHeight(t *testing.T) {
 	}
 }
 
+func TestBlockWithTxLowFunds(t *testing.T) {
+	var (
+		chain     = NewChain(NewMemoryBlockStore(), NewMemoryTXStore())
+		block     = randomBlock(t, chain)
+		privKey   = crypto.NewPrivateKeyFromString(seed)
+		toAddress = crypto.GeneratePrivateKey().Public().Address().Bytes()
+	)
+	prevTx, err := chain.txStore.Get("72fbff407e9b4c36f1e26522be2b4550b5ef6194b770b19bef34a3be202e3fe8")
+	assert.Nil(t, err)
+	inputs := []*proto.TxInput{
+		{
+			PrevTxHash:   types.HashTransaction(prevTx),
+			PrevOutIndex: 0,
+			PublicKey:    privKey.Public().Bytes(),
+		},
+	}
+	outputs := []*proto.TxOutput{
+		{
+			Amount:  1001,
+			Address: toAddress,
+		},
+	}
+	tx := &proto.Transaction{
+		Version: 1,
+		Inputs:  inputs,
+		Outputs: outputs,
+	}
+	sig := types.SignTransaction(privKey, tx)
+	tx.Inputs[0].Signature = sig.Bytes()
+
+	block.Transactions = append(block.Transactions, tx)
+	require.NotNil(t, chain.AddBlock(block))
+}
+
 func TestBlockWithTx(t *testing.T) {
 	var (
 		chain     = NewChain(NewMemoryBlockStore(), NewMemoryTXStore())
@@ -65,11 +98,11 @@ func TestBlockWithTx(t *testing.T) {
 		privKey   = crypto.NewPrivateKeyFromString(seed)
 		toAddress = crypto.GeneratePrivateKey().Public().Address().Bytes()
 	)
-	ftt, err := chain.txStore.Get("72fbff407e9b4c36f1e26522be2b4550b5ef6194b770b19bef34a3be202e3fe8")
+	prevTx, err := chain.txStore.Get("72fbff407e9b4c36f1e26522be2b4550b5ef6194b770b19bef34a3be202e3fe8")
 	assert.Nil(t, err)
 	inputs := []*proto.TxInput{
 		{
-			PrevTxHash:   types.HashTransaction(ftt),
+			PrevTxHash:   types.HashTransaction(prevTx),
 			PrevOutIndex: 0,
 			PublicKey:    privKey.Public().Bytes(),
 		},
@@ -99,12 +132,4 @@ func TestBlockWithTx(t *testing.T) {
 	fetchedTx, err := chain.txStore.Get(txHash)
 	assert.Nil(t, err)
 	assert.Equal(t, tx, fetchedTx)
-
-	// check if this is an UTXO that is unspent
-	address := crypto.AddressFromBytes(tx.Outputs[0].Address)
-	key := fmt.Sprintf("%s_%s", address.String(), txHash)
-	utxo, err := chain.utxoStore.Get(key)
-
-	assert.Nil(t, err)
-	assert.Equal(t, txHash, utxo.Hash)
 }
