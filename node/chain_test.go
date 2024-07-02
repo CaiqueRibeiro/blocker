@@ -57,7 +57,7 @@ func TestChainHeight(t *testing.T) {
 	}
 }
 
-func TestBlockWithTxLowFunds(t *testing.T) {
+func TestAddBlockWithTxInsufficientFunds(t *testing.T) {
 	var (
 		chain     = NewChain(NewMemoryBlockStore(), NewMemoryTXStore())
 		block     = randomBlock(t, chain)
@@ -88,10 +88,11 @@ func TestBlockWithTxLowFunds(t *testing.T) {
 	tx.Inputs[0].Signature = sig.Bytes()
 
 	block.Transactions = append(block.Transactions, tx)
+	types.SignBlock(privKey, block)
 	require.NotNil(t, chain.AddBlock(block))
 }
 
-func TestBlockWithTx(t *testing.T) {
+func TestAddBlockWithTx(t *testing.T) {
 	var (
 		chain     = NewChain(NewMemoryBlockStore(), NewMemoryTXStore())
 		block     = randomBlock(t, chain)
@@ -126,6 +127,7 @@ func TestBlockWithTx(t *testing.T) {
 	tx.Inputs[0].Signature = sig.Bytes()
 
 	block.Transactions = append(block.Transactions, tx)
+	types.SignBlock(privKey, block)
 	require.Nil(t, chain.AddBlock(block))
 
 	txHash := hex.EncodeToString(types.HashTransaction(tx))

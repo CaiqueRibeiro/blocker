@@ -35,10 +35,12 @@ func VerifyTransaction(tx *proto.Transaction) bool {
 			Removes the signature to not break Verify, because when transaction input was signed,
 			there was not signature in input yet
 		*/
+		tempSig := input.Signature
 		input.Signature = nil
 		if !sig.Verify(pubKey, HashTransaction(tx)) {
 			return false
 		}
+		input.Signature = tempSig
 	}
 	return true
 }
