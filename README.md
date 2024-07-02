@@ -37,3 +37,41 @@ DEBUG	node/node.go:137	received tx	{"from": "127.0.0.1:56842", "hash": "dc1b4b78
 DEBUG	node/node.go:137	received tx	{"from": "127.0.0.1:56849", "hash": "04c6a7e51d3d8fb1fe93f8fd5d293772cd0f8bb719b5f27b959964cd19236426", "we": ":3000"}
 DEBUG	node/node.go:137	received tx	{"from": "127.0.0.1:56838", "hash": "04c6a7e51d3d8fb1fe93f8fd5d293772cd0f8bb719b5f27b959964cd19236426", "we": ":4000"}
 ```
+
+## Tests
+To run all the tests (unit and integration), execute the bash command `make test`.
+```bash
+make test
+
+=== RUN   TestGeneratePrivateKey
+--- PASS: TestGeneratePrivateKey (0.00s)
+=== RUN   TestGeneratePrivateKeyFromString
+--- PASS: TestGeneratePrivateKeyFromString (0.00s)
+=== RUN   TestPrivateKeySign
+--- PASS: TestPrivateKeySign (0.00s)
+=== RUN   TestPublicKeyToAddress
+--- PASS: TestPublicKeyToAddress (0.00s)
+PASS
+ok      github.com/CaiqueRibeiro/blocker/crypto     (cached)
+?       github.com/CaiqueRibeiro/blocker/proto      [no test files]
+?       github.com/CaiqueRibeiro/blocker/util       [no test files]
+=== RUN   TestNewChain
+--- PASS: TestNewChain (0.00s)
+=== RUN   TestAddBlock
+--- PASS: TestAddBlock (0.01s)
+=== RUN   TestChainHeight
+--- PASS: TestChainHeight (0.01s)
+=== RUN   TestAddBlockWithTxInsufficientFunds
+--- PASS: TestAddBlockWithTxInsufficientFunds (0.00s)
+=== RUN   TestAddBlockWithTx
+--- PASS: TestAddBlockWithTx (0.00s)
+PASS
+ok      github.com/CaiqueRibeiro/blocker/node       (cached)
+=== RUN   TestCalculateRootHash
+--- PASS: TestCalculateRootHash (0.00s)
+=== RUN   TestHashBlock
+--- PASS: TestHashBlock (0.00s)
+=== RUN   TestSignVerifyBlock
+--- PASS: TestSignVerifyBlock (0.00s)
+=== RUN   TestNewtransaction
+```
