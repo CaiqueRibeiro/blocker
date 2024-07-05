@@ -2,6 +2,12 @@
 
 Blocker is a simplified version of blockchain algorithms that works on UTXO transactions and connect peer to peer with nodes in chain.
 
+## Specs
+
+|     | Specs                                                                                                                |
+| --- | -------------------------------------------------------------------------------------------------------------------- |
+| 🚀  | **Go** Fast and easy language for performance apps.                   |
+| 🧙🏼‍♀️  | **gRPC** modern open source high performance Remote Procedure Call (RPC) framework that can run in any environment.                                                                                         |
 ## How to run
 The main.go file of project creates dummy blocks to simulate connection and UTXO transactions.
 To run this simulation, execute de Makefile command `make run`.
